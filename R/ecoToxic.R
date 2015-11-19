@@ -22,6 +22,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
+#' @importFrom graphics axis
+
 #' @title Method ecoToxicological
 #' @description Generic method on Landscape and Individuals objects for ecotoxicological.
 #' @name ecoToxic
@@ -82,13 +84,18 @@ plotEcoToxic<-function(objectL,objectI,objectT,numind=8) {
   mintime=1
   xstep=(objectL@xmax-objectL@xmin)/length(objectT[mintime,,1])
   ystep=(objectL@ymax-objectL@ymin)/length(objectT[mintime,1,])
-  par(mar=c(5.1,4.1,4.1,2.1))
+  par(mar=c(4.1,4.1,4.1,3.1))
   for(i in numind ) {
-    plot(objectT[,objectI@coordinate[i]@coords[1]/xstep,objectI@coordinate[i]@coords[2]/ystep],col=2,xlab="time",ylab="toxic",type="b",pch=16)
-    lines(objectI@intern_toxic[i,],col=1,type="b",pch=16)
+    plot(objectT[,objectI@coordinate[i]@coords[1]/xstep,objectI@coordinate[i]@coords[2]/ystep],col=1,xlab="time",ylab=" ",type="b",pch=16,las=1)
+    max_local=max(objectT[,objectI@coordinate[i]@coords[1]/xstep,objectI@coordinate[i]@coords[2]/ystep])
+    max_indiv=max(objectI@intern_toxic[i,])
+    lines(objectI@intern_toxic[i,]*max_local/max_indiv,col=2,type="b",pch=16)
     points(objectI@dob[i],0,col=3,pch=16,cex=1.5)
-    legend("topright",c("internal concentration","local conc","date of birth"),col=c(1,2,3),pch=16 )
+    legend("topright",c("internal concentration","local concentration","date of birth"),col=c(2,1,3),pch=16 )
     title(main=paste("Individual #",numind))
+    axis(side=4,at=seq(0,max_local,max_local/4),labels=round(seq(0,max_indiv,max_indiv/4),2),las=1,col.axis=2)
+    mtext("local concentration",3,line=0,col=1,at=-3)
+    mtext("internal concentration",3,line=0,col=2,at=60)
   }
 }
 

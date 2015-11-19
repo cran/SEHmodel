@@ -24,12 +24,13 @@
 
 # @import MASS
 #' @importFrom pracma trapz
+#' @importClassesFrom raster RasterLayer
 #' @importFrom raster raster
 #' @importFrom raster extent
 #' @importFrom raster extent<-
 #' @importFrom raster rasterize
 #' @importFrom raster as.matrix
-#' @importFrom raster as.vector
+# @importMethodsFrom raster as.vector
 #' @importFrom raster projectRaster
 #' @importFrom raster addLayer
 #' @importFrom raster writeRaster

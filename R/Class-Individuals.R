@@ -23,19 +23,19 @@
 #
 
 #' @title Class Individuals
+#' @name Individuals-class
 #' 
 #' @description
 #' \code{Individuals} Class consists of spatio-temporal parameters about exposed populations.
 #' 
 #' Individual gets coordinates (as SpatialPoints), a date of birth, a life duration, an intern toxic concentration over the time and a toxic threshold (max value of toxic before death).
 #' 
-#'  Each individual in an Individuals object is identified by an ID which is use as index to acces attributs in the object.
+#' Each individual in an Individuals object is identified by an ID which is use as index to acces attributs in the object.
 #' 
 #' @details Objects can be created by calling of the allocator new("Individuals", ...), or (preferred) by calling one of the wrapped functions \link{simulateIndividuals} or \link{loadIndividuals}.
 #'
 #' @seealso \code{\link{simulateIndividuals}} , \code{\link{loadIndividuals}}
 #'
-#' @name Individuals-class
 #' @rdname Individuals-class
 #' 
 #' @slot n individuals Number

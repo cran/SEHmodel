@@ -212,22 +212,23 @@ setMethod(f="print",
           }
 )
 
-# getIndividuals[i] retourne info individue i 
-# [i,t] retourne info a temps t
-#' @title Get one individual infos
-# @name [
+# getIndividuals[i] select subset of individuals information 
+# [i,t] return the subset at time t
+#' @title Select subset of individuals data
+#' @name [, Individuals
 #' @param x An Individuals object
 #' @param i individual index
 #' @param j time of informations
 #' @param ... further arguments passed to or from others methods.
 #' @param drop logical value (default = TRUE)
-# @rdname Individuals-get-methods
-# @aliases [,Individuals-method
+#' @return a data.frame
+#' @rdname Individuals-get-methods
+#' @aliases [,Individuals,numeric,ANY,ANY-method
 # @usage x[i,j]
 #' @export
 setMethod(
   f="[",
-  signature=c(x="Individuals",i="numeric",j="numeric",drop="logical"),
+  signature=c(x="Individuals",i="numeric",j="ANY",drop="ANY"),
   definition=function(x,i,j,...,drop=T) {
    if(i<=x@n && missing(j)) {
      df<-data.frame(id=c(i),coodinate=c(x@coordinate[i]),dob=c(x@dob[i]),life_expectencies=c(x@life_duration[i]),toxic_threshold=c(x@toxic_threshold[i]))
