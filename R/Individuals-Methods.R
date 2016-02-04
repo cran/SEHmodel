@@ -24,11 +24,10 @@
 
 #' @title Wrapper function SimulateIndividuals
 #' @name simulateIndividuals
-#' 
-#' @description Wrapper to create an Individuals object.
+#' @description This function simulates individuals as an Individuals object.
 #' 
 #' Will simulate \code{nb} individuals in receptors fields of a \code{landscape}.
-#' 
+#' @details The Individuals object output includes for each individual the coordinates, the date of birth, the life duration and the intern toxic concentration.
 #' @rdname simulateIndividuals-constructor-class
 #' @param objectL A Landscape object
 #' @param n Number of individuals to simulate
@@ -36,8 +35,9 @@
 #' @param maxtime End simulation time
 #' @param dob A vector for the Date Of Birth of each individual 
 #' @param life_duration A vector for the life duration of each individual
-#' @param toxic_threshold A vector for the intern toxic threshold value for each individual before death
+#' @param toxic_threshold A vector for the intern toxic threshold value leading to death for each individual 
 #' @return A S4 \code{Individuals} object
+#' @seealso \link{loadIndividuals}
 #' @include Class-Landscape.R Class-Individuals.R
 #' @export
 simulateIndividuals <- function(objectL,n=200,mintime=1,maxtime,dob,life_duration,toxic_threshold) {
@@ -62,14 +62,14 @@ simulateIndividuals <- function(objectL,n=200,mintime=1,maxtime,dob,life_duratio
   return (res)
 }
 
-#' @title Method plot
-#' 
+#' @title Plot method for Individuals
+#' @name Individuals plot 
 #' @description Will plot individuals spatial positions.
 #' 
 # @name plot
 #' @param x An Individuals object
 # @param y missing (not use)
-#' @param add if True will plot hover an already plot image (default False) 
+#' @param add if True the new plot will overlap an already plot image (default False) 
 #' @param ... further graphical parameters (\code{par})
 #' @param plot.legend plot legend (default TRUE)
 #' @rdname Individuals-plot-methods
@@ -87,16 +87,16 @@ setMethod(f="plot",
           }
 )
 
-#' @title Method plot
+#' @title Plot method for Individuals
 #' 
 #' @description Will plot individuals positions and state at a time of the simulation.
-#' @details "Red" cross means that the individual is dead by toxic exposition.
-#' "White" cross means that the individual is dead by natural death.
-#' "Green" to "Red" points give the gradiant of toxic concentration before the threshold.
+#' @details "Red" cross means that the individual is dead becouse of toxic exposition.
+#' "Green" cross means that the individual is dead by natural death.
+#' "Green" to "Red" points give the gradient of toxic concentration before the threshold.
 #' 
 # @param x An Individuals object
 #' @param y time of the simulation to display individuals
-# @param add if True will plot hover an already plot image (default False) 
+# @param add if True this plot will plot overlap an already plot image (default False) 
 # @param ... further graphical parameters (\code{par})
 #' @rdname Individuals-plot-methods
 #' @aliases plot,Individuals,num-method
@@ -154,8 +154,9 @@ setMethod(f="plot",
 )
 
 
-#' @title Show part of Individuals Info
-#' @name show
+#' @title Show a summary of Individuals information
+#' @description print a summary of Individuals information
+# @name show Individuals
 #' @param object An Individuals object
 #' @rdname Individuals-show-method
 #' @aliases show,Individuals-method
@@ -186,7 +187,7 @@ setMethod(f="show",
 
 # @title Print part of Individuals info
 # @name print
-#' print
+#' print Individuals information
 #' @param x An Individuals object
 #' @param ... further arguments passed to or from other methods.
 #' @rdname Individuals-print-class
@@ -212,13 +213,14 @@ setMethod(f="print",
           }
 )
 
-# getIndividuals[i] select subset of individuals information 
-# [i,t] return the subset at time t
-#' @title Select subset of individuals data
-#' @name [, Individuals
+# getIndividuals[i] retourne info individue i 
+# [i,t] retourne info a temps t
+# @name [
+#' @title Get an individual infomation
+#' @description Get an Individual information
 #' @param x An Individuals object
 #' @param i individual index
-#' @param j time of informations
+#' @param j time of information
 #' @param ... further arguments passed to or from others methods.
 #' @param drop logical value (default = TRUE)
 #' @return a data.frame
@@ -228,7 +230,7 @@ setMethod(f="print",
 #' @export
 setMethod(
   f="[",
-  signature=c(x="Individuals",i="numeric",j="ANY",drop="ANY"),
+  signature=c(x="Individuals",i="numeric",j="numeric",drop="logical"),
   definition=function(x,i,j,...,drop=T) {
    if(i<=x@n && missing(j)) {
      df<-data.frame(id=c(i),coodinate=c(x@coordinate[i]),dob=c(x@dob[i]),life_expectencies=c(x@life_duration[i]),toxic_threshold=c(x@toxic_threshold[i]))
@@ -247,10 +249,10 @@ setMethod(
  }
 )
 
-#' @title Method to get Individuals Life info
+#' @title Method to get Individuals Life information
 #' @name getIndividualsLife
 # @param object An Inidividuals object
-#' @param ... others parameters
+#' @param ... other parameters
 #' @rdname Individuals-getIndividualsLife-method
 #' @exportMethod getIndividualsLife
 setGeneric(name="getIndividualsLife",
@@ -261,10 +263,10 @@ setGeneric(name="getIndividualsLife",
 #' getIndividualsLife
 #'
 #' @description Get individuals toxic concentration over the simulation time.
-#' If intern concentration overtakes the toxic threshold value is "-2", that means the toxic kill the individual
-#' otherwise value is "-1" means the individual is dead in natural way. The value "0" means that the individual is not alive yet.
-#' @param object An Inidividuals object
-#' @return a matrix indexed by individual ID in row and by time in columns.
+#' If intern concentration overtakes the toxic threshold value is "-2", that means the individual is dead because of higher toxic concentration.
+#' Otherwise value is "-1" means the individual is dead in natural way. The value "0" means that the individual is not alive yet.
+#' @param object An Individuals object
+#' @return a matrix indexed by individual ID in rows and by time in columns.
 #' @aliases getIndividualsLife,Individuals-method
 #' @rdname Individuals-getIndividualsLife-method
 setMethod(f="getIndividualsLife",
@@ -285,18 +287,24 @@ setMethod(f="getIndividualsLife",
 
 #' @title Wrapper function loadIndividuals
 #' @name loadIndividuals
+#' @description Wrapper function to create an Individuals object using SpatialPoints and dataframe.
 #' 
-#' @description Wrapper to create an Individuals object using SpatialPoints and dataframe.
-#' 
-#' The SpatialPoints object and the data.frame have to contain the same number of coordinates and row.
-#' 
+#' The SpatialPoints object and the data.frame have to contain the same number of coordinates and rows.
 #' @rdname load-Individuals-class
 #' @param objectL a Landscape object
 #' @param sp a SpatialPoint object (individuals coordinates)
-#' @param data a data.frame containing individuals attributs. Row num as individuals ID, cols names as dob (date of birth) | life_duration | toxic_threshold
+#' @param data a data.frame containing individuals attributes. Rows numbers as individuals ID, columns names as dob (date of birth) | life_duration | toxic_threshold
 #' @param mintime Start simulation time
 #' @param maxtime End simulation time
-#' @return an Individuals object
+#' @examples  
+#' \dontrun{
+#' # simulate individuals coordinates (SpatialPoints object):
+#' coordinates <- spsample(getSPReceptors(land),n=2)
+#' df <- data.frame("dob"=c(1,8),"life_duration"=c(20,20),
+#'            "toxic_threshold"=c(15,15),row.names = c(1,2))
+#' ind <- loadIndividuals(objetL=land,sp=coordinates,data=df,mintime=1,maxtime=60)
+#' }
+#' @return an \code{\link{Individuals-class}} object
 #' @export
 loadIndividuals<-function(objectL,sp,data,mintime,maxtime) {
   

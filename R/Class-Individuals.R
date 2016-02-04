@@ -30,7 +30,7 @@
 #' 
 #' Individual gets coordinates (as SpatialPoints), a date of birth, a life duration, an intern toxic concentration over the time and a toxic threshold (max value of toxic before death).
 #' 
-#' Each individual in an Individuals object is identified by an ID which is use as index to acces attributs in the object.
+#' Each individual in an Individuals object is identified by an ID which is used as index to access attributes in the object.
 #' 
 #' @details Objects can be created by calling of the allocator new("Individuals", ...), or (preferred) by calling one of the wrapped functions \link{simulateIndividuals} or \link{loadIndividuals}.
 #'
@@ -40,16 +40,16 @@
 #' 
 #' @slot n individuals Number
 #' @slot coordinate individuals coordinates (as SpatialPoints)
-#' @slot xmin Abscissa left value
-#' @slot xmax Abscissa right value
-#' @slot ymin Ordinate top value
-#' @slot ymax Ordinate bottom value
+#' @slot xmin x-axis left value
+#' @slot xmax x-axis right value
+#' @slot ymin y-axis bottom value
+#' @slot ymax y-axis top value
 #' @slot dob Date of birth (as vector)
 #' @slot life_duration individuals life duration (as vector)
 #' @slot intern_toxic individuals intern toxic concentration in time (as matrix)
-#' @slot toxic_threshold individuals max toxic concentration before death (as vector)
-#' @slot mintime First day
-#' @slot maxtime Last day
+#' @slot toxic_threshold individuals max toxic concentration leading to death (as vector)
+#' @slot mintime Start simulation time
+#' @slot maxtime End simulation time
 #'  
 #' @exportClass Individuals
 setClass(Class="Individuals",

@@ -38,9 +38,9 @@
 #' @importFrom fftwtools fftw2d
 #' @importFrom mvtnorm pmvnorm
 
-#' @title Method toxicIntensity
+#' @title toxicIntensity Method
 #' 
-#' @description Simulate contaminants intensity over the landscape.
+#' @description Simulate contaminants intensity over the landscape by two steps : dispersal of toxic particules and local intensity of particules after dispersal.
 #' 
 #' @name toxicIntensity
 #' @param objectL A Landscape object
@@ -54,24 +54,32 @@ setGeneric(name="toxicIntensity",
 )
 
 #' @name toxicIntensity
-#' @details The dispersal of contaminants is implemented by rastering the landscape and by computing the convolution.
+#' @details The dispersal of contaminants is implemented by rastering the landscape and by computing the convolution between sources emissions and a dispersal kernel.
 #' 
-#' Local intensity depends of beta and alpha parameters.
+#' The dispersion kernel by default is Normal Inverse Gaussian kernel ("NIG" function). Currently, two others are implemented "geometric" (with parameter \code{a}) and "2Dt" kernels (with parameters \code{a}, \code{b}, \code{c1}, \code{c2}).
+#' 
+#' Local intensity depends of \code{beta} and \code{alpha} parameters. Beta represents the toxic adherence between [0,1].
+#' Alpha represents a list of parameters of the lost of toxic particules due to covariates (precipitation).
+#' There are two configurations to integrate the loss in the function : 
+#' (i) simulating covariate (simulate=TRUE) or (ii) uploading covariate (simulate=FALSE).
+#' The covariate is linked to the loss by a linear regression with paramaters minalpha, maxalpha, covariate_threshold.
 #' 
 #' @param toxic_emission Matrix of sources emissions, row as sources ID, col as time
 #' @param mintime Start simulation time (default=1)
 #' @param maxtime End simulation time
 #' @param size_raster raster size (default = 2^10)
-#' @param kernel dispersion kernel, function name (default=NIG)
-#' @param kernel.options kernel function parameters
-#' @param beta toxic adherence parameter between 0 and 1 included
-#' @param alpha list of loss options
-#' @return A 3D array as time matrix dispertion, [t,x,y]
+#' @param kernel dispersion kernel, function name (default = NIG)
+#' @param kernel.options parameters list for the kernel function
+#' @param beta toxic adherence parameter between 0 and 1 (default = 0.4)
+#' @param alpha list of toxic loss options
+#' 
+#' (default = list(minalpha=0.1,maxalpha=0.95,covariate_threshold=30,simulate=TRUE,covariate=NULL))
+#' @return A ToxicIntensityRaster, a 3D array as time matrix dispersion, [t,x,y]
 #' @aliases toxicIntensity,Landscape-method
 #' @rdname Landscape-toxicIntensity-method
 setMethod(f="toxicIntensity",
           signature="Landscape",
-          definition=function(objectL,toxic_emission,mintime=1,maxtime=60,size_raster=2^10,kernel="NIG",kernel.options=list("h"=2,"mu"=2,"theta"=0,"gamma"=-2.59),beta=0.4,alpha=list(minalpha=0.1,maxalpha=0.95,covariate_threshold=30,simulate=T,covariate=NULL)) {
+          definition=function(objectL,toxic_emission,mintime=1,maxtime=60,size_raster=2^10,kernel="NIG",kernel.options=list("a1"=0.2073 ,"a2"=0.2073 , "b1"=0.3971, "b2"=0.3971, "b3"= 0.0649, "theta"=0),beta=0.4,alpha=list(minalpha=0.1,maxalpha=0.95,covariate_threshold=30,simulate=T,covariate=NULL)) {
             sources<-getSPSources(objectL)
             if(length(sources) != nrow(toxic_emission)) {
               cat("srcdist vector length differ from landscape sources number")
@@ -108,41 +116,51 @@ setMethod(f="toxicIntensity",
             loss[precip>alpha$covariate_threshold]=alpha$maxalpha
                        
             #rasterize
-            r<-raster(ncol=size_raster,nrow=size_raster)
-            extent(r)<-extent(sources)
+            r<-raster(ncol=size_raster,nrow=size_raster,ext=extent(sources),crs=proj4string(objectL@thelandscape))
+            #extent(r)<-extent(sources)
             
             # raster avec ID parcelle sources
             rb<-rasterize(sources,r,field=as.numeric(row.names((sources@data)))) 
             rm(r)
             
+            convol.env <- new.env(parent = as.environment("package:SEHmodel"))
             #----------------------------------------------
             # flux.convol : fait le produit de convolution pour calculer les flux (dispersion avec Emission de maïs=1) dans le domaine
             # calcul d'une matrice de convolution par parcelle OGM :
             size_domain<-objectL@xmax-objectL@xmin
+            
             for(i in row.names(sources)) {
-              rb_temp=rb
-              rb_temp[rb_temp@data@values!=i]=NA
-              rb_temp[rb_temp@data@values==i]=1
-              assign(paste("f",i,sep=""),flux.convol(kernel,kernel.options,size_domain,size_raster,rb_temp))
+              rb_temp<-rb
+              #rb_temp[which(rb_temp@data@values!=i)]<-NA
+              rb_temp[!rb_temp@data@values%in%as.numeric(i)] <- NA
+              rb_temp[rb_temp@data@values%in%as.numeric(i)] <- 1
+              #rb_temp[which(rb_temp@data@values==i)]<-1
+              assign(paste0("field",i),flux.convol(kernel,kernel.options,size_domain,size_raster,rb_temp,convol.env),envir = convol.env)
               rm(rb_temp)
             }
             
             res=array(0,c(maxtime,size_raster,size_raster))
             for(t in mintime:maxtime) {
-              all_toxic=array(0,c(size_raster,size_raster))
+              #all_toxic=array(0,c(size_raster,size_raster))
+              all_toxic <- matrix(data = 0,nrow = size_raster,ncol = size_raster)
               for(i in row.names(sources)) {
-                all_toxic <- as.matrix(all_toxic) + (S * toxic_emission[as.character(i),paste("t.",t,sep="")] * as.matrix(get(paste("f",as.numeric(i),sep=""))) * beta)
+                if(toxic_emission[as.character(i),paste0("t.",t)] != 0) {
+                  all_toxic <- all_toxic + (S * toxic_emission[as.character(i),paste0("t.",t)] * as.matrix(get(paste0("field",i),envir = convol.env)) * beta)
+                }
               }
               if(t == mintime) {res[t,,] <- all_toxic
               } else { res[t,,] <- all_toxic + res[t-1,,]*(1-loss[t]) }
             }
             
+            rm(convol.env)
+            
+            attr(res,"class") <- "ToxicIntensityRaster"
             return(res)
           }
 )
 
 
-#' Method plotLandscapetoxicIntensity
+#' PlotLandscapetoxicIntensity Method
 #' 
 #' Plot a landscape and the toxic intensity at a time t.
 #' 
@@ -150,7 +168,7 @@ setMethod(f="toxicIntensity",
 #' 
 #' @param objectL a Landscape object
 #' @param objectT a 3D array from toxicIntensity, [time,x,y]
-#' @param time at witch time to plot the toxic dispersion
+#' @param time time to plot the toxic dispersion
 #' @export
 plotLandscapetoxicIntensity<-function(objectL,objectT,time) {
   plot(objectL)
@@ -184,22 +202,25 @@ plotLandscapetoxicIntensity<-function(objectL,objectT,time) {
 ############## PRIVATE ####################
 
 # Convolution function
-flux.convol<-function(kernel,kernel.options,size_domain,size_raster,rb){ 
+flux.convol<-function(kernel,kernel.options,size_domain,size_raster,rb,envir){ 
   
-  if(size_domain%%2 == 1) {
-    size_domain <- size_domain+1
+  if(!exists("z",envir=envir,inherits = FALSE) | is.null(envir$z)) {
+  
+    if(size_domain%%2 == 1) {
+      size_domain <- size_domain+1
+    }
+  
+    x=y=seq(from=-(size_domain/2),to=size_domain/2,length.out=size_raster)
+    #z<-kernel
+    z<-outer(x,y,kernel,kernel.options)
+    envir$z<-z/trapz2d(z) #on normalise le noyau
+    rm(x);rm(y);rm(z);
   }
-  
-  x=y=seq(from=-(size_domain/2),to=size_domain/2,length.out=size_raster)
-  #z<-kernel
-  z<-outer(x,y,kernel,kernel.options)
-  z<-z/trapz2d(z) #on normalise le noyau
-  
   e<-as.matrix(rb)
   e[is.na(e)]<-0
-  F<-convolution(z,e,size_raster)
+  F<-convolution(envir$z,e,size_raster)
   
-  rm(x);rm(y);rm(z);rm(e);gc()
+  #rm(e);gc()
   return (F)
 }
 
@@ -225,18 +246,14 @@ flux.convol<-function(kernel,kernel.options,size_domain,size_raster,rb){
 #   return(A*B*C)
 # }
 
-NIG<-function(x,y,kernel.options=list("h"=2,"mu"=2,"theta"=0)){
-  if(is.null(kernel.options$h)) { h=2 }
-  else { h=kernel.options$h }
-  if(is.null(kernel.options$mu)) { mu=2 }
-  else { mu=kernel.options$mu }
+NIG<-function(x,y,kernel.options=list("a1"=0.2073 ,"a2"=0.2073 , "b1"=0.3971 ,"b2"=0.3971 ,"b3"= 0.0649,"theta"=0)){
   if(is.null(kernel.options$theta)) { theta=0 }
   else { theta=kernel.options$theta }
-  lambda_z=0.027*h/0.831
-  lambda_x=0.165*h*mu*cos(theta)/(2*0.831)
-  lambda_y=0.165*h*mu*sin(theta)/(2*0.831)
-  delta_x=0.499*0.831/h
-  delta_y=delta_x
+  lambda_z=kernel.options$b3                 #=0.027*h/0.831 avec h=2
+  lambda_x=kernel.options$b1*cos(theta)      #0.165*h*mu*cos(theta)/(2*0.831) # avec h=mu=2
+  lambda_y=kernel.options$b2*sin(theta)     #0.165*h*mu*sin(theta)/(2*0.831)  avec h=mu=2
+  delta_x=kernel.options$a1                  #0.499*0.831/h
+  delta_y=kernel.options$a2
   p=lambda_z^2+lambda_x^2+lambda_y^2
   q=1+delta_x^2*x^2+delta_y^2*y^2
   A=delta_x*delta_y*exp(lambda_z)/(2*pi)
@@ -247,21 +264,23 @@ NIG<-function(x,y,kernel.options=list("h"=2,"mu"=2,"theta"=0)){
 
 #2Dt Student kernel
 
-student<-function(x,y,kernel.options=list("theta"=0)){
+student<-function(x,y,kernel.options=list("c1"=1.12,"a"=1.55,"b"=1.45,"c2"=0,"theta"=0)){
+  a=kernel.options$a
+  b=kernel.options$b
+  c2=kernel.options$c2
+  c1=kernel.options$c1
   theta=kernel.options$theta
-  a=1.55;b=1.45;kappa=1.12;theta0=0
   A=(b-1)/(pi*a*a)
   B=(1+(x*x+y*y)/(a*a))^(-b)
-  C=exp(kappa*cos(theta-theta0))
+  C=exp(c1*cos(theta-c2))
   return(A*B*C)
 }
 
 #Geometric kernel Soubeyrand
 
-geometric<-function(x,y,kernel.options=list("gamma"=-2.59))   {
-  beta=kernel.options$gamma
-  A=(1+sqrt(x*x+y*y))^gamma;B=(gamma+1)*(gamma+2)/(2*pi);return(A*B)}
-
+geometric<-function(x,y,kernel.options=list("a"=-2.59))   {
+  aa=kernel.options$a
+  A=(1+sqrt(x*x+y*y))^aa;B=(aa+1)*(aa+2)/(2*pi);return(A*B)}
 
 
 #### FatTail 

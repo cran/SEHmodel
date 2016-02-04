@@ -26,18 +26,21 @@
 #' @title Spatial Exposure-Hazard Model for Exposure and Impact Assessment on Exposed Individuals
 #' @description A model coupling polygon and point processes for assessing risk due to contaminant sources and their impact on exposed individuals
 #' @aliases SEHmodel-package SEHmodel
-#' @author Melen Leclerc \email{melen.leclerc@@rennes.inra.fr}
-#' @author Jean-Francois Rey \email{jean-francois.rey@@paca.inra.fr}
-#' @author Samuel Soubeyrand \email{Samuel.Soubeyrand@@avignon.inra.fr}
+#' 
 #' @author Emily Walker \email{emily.walker@@avignon.inra.fr}
+#' @author Jean-Francois Rey \email{jean-francois.rey@@paca.inra.fr}
+#' @author Melen Leclerc \email{melen.leclerc@@rennes.inra.fr}
+#' @author Samuel Soubeyrand \email{Samuel.Soubeyrand@@avignon.inra.fr}
 #' @author Marc Bourotte \email{marc.bourotte@@avignon.inra.fr}
+#' 
+#' Maintainer: Jean-Francois REY \email{jean-francois.rey@@paca.inra.fr}
 #' @docType package
 #' @name SEHmodel-package
 #' @details \tabular{ll}{
 #'          Package: \tab SEHmodel\cr
 #'          Type: \tab Package\cr
-#'          Version: \tab 0.0.9\cr
-#'          Date: \tab 2015-10-02\cr
+#'          Version: \tab 0.0.11\cr
+#'          Date: \tab 2016-02-04\cr
 #'          License: \tab GPL (>=2)\cr
 #'          }
 #'
@@ -50,7 +53,7 @@
 #' (ii) a method based on a dispersal kernel describing the dissemination of contaminant particles from polygon sources,
 #' and (iii) an ecotoxicological equation describing how contaminants affect individuals of the exposed population.
 #'          
-#' @references Emily Walker and al. , SEHmodel: Spatially-explicit model for exposure and impact assessment
+#' @references Emily Walker and al. , SEHmodel: Spatially-explicit model for exposure and impact assessment. Submitted.
 #' @keywords model spatial survival
 #' @seealso \code{\link{demo.pollen.run}}
 #' @examples

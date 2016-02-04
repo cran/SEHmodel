@@ -22,21 +22,21 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-#' @title function simulateInitialPartition
-#' 
-#' Create an object \code{Landscape}. Simulate a landscape with neutral and source fields.
-#' 
+#' @title simulateInitialPartition Method
+#' @description This function creates an object \code{Landscape} and simulates a landscape with neutral and source fields.
 #' @name simulateInitialPartition
 #' @rdname Landscape-constructor-class
 #' @param n Numeric, numbers of fields
 #' @param prop Numeric [0,1] toxic fields proportion
-#' @param range truc
-#' @param xmin x left coordinates
-#' @param xmax x right coordinates
-#' @param ymin y top coordinates
-#' @param ymax y bottom coordinates
-#' @return An S4 \code{Landscape} object with n fields, prop pourcentage of toxic fields of size (xmin,xmax) (ymin,ymax)
-#' @examples simulateInitialPartition(n=500,prop=0.4,range=10,xmin=0,xmax=5000,ymin=0,ymax=5000)
+#' @param range aggregation parameter (range of the spatial Exponential covariance of Gaussian process)
+#' @param xmin x-axis left coordinates
+#' @param xmax x-axis right coordinates
+#' @param ymin y-axis bottom coordinates
+#' @param ymax y-axis top coordinates
+#' @return An S4 \code{Landscape} object with \code{n} fields, \code{prop} pourcentage of toxic fields of size (xmin,xmax) (ymin,ymax)
+#' @examples
+#' # simulate a 5000m x 5000m landscape with 500 fields whose 40% (200) are sources
+#'   simulateInitialPartition(n=500,prop=0.4,range=10,xmin=0,xmax=5000,ymin=0,ymax=5000)
 #' @export
 simulateInitialPartition <- function(n=500,prop=0.4,range=10,xmin=0,xmax=5000,ymin=0,ymax=5000) {
   
@@ -56,25 +56,29 @@ simulateInitialPartition <- function(n=500,prop=0.4,range=10,xmin=0,xmax=5000,ym
 }
 
 
-#' @title function simulateLandscape
-#' 
-#' Create an object \code{Landscape}. Simulate a landscape with neutral and source fields and receptors margins.
-#' 
+#' @title SimulateLandscape Method
 #' @name simulateLandscape
+#' @description Create an object \code{Landscape}. Simulate a landscape with neutral and source fields and receptors margins.
+#' @details Execute both \link{simulateInitialPartition} and \link{simulateThickMargins} functions.
 #' @rdname simulateLandscape-constructor-class
 #' @param n Numeric, numbers of fields
 #' @param prop Numeric [0,1] toxic fields proportion
-#' @param range truc
-#' @param xmin x left coordinates
-#' @param xmax x right coordinates
-#' @param ymin y top coordinates
-#' @param ymax y bottom coordinates
+#' @param range aggregation parameter (range of the spatial exponential covariance of gaussian process) in meters.
+#' @param xmin x-axis left coordinates
+#' @param xmax x-axis right coordinates
+#' @param ymin y-axis bottom coordinates
+#' @param ymax y-axis top coordinates
 #' @param border_size A numeric, bbox margin
-#' @param prob Probability to inflated a border
-#' @param mean_thickness Border width expectation
-#' @param v_thickness Border width variance
-#' @return An S4 \code{Landscape} object with n fields, prop pourcentage of toxic fields of size (xmin,xmax) (ymin,ymax)
-#' @examples \dontrun{ simulateLandscape(100,0.4,10,0,1000,0,1000,100,runif(1,0.1,0.9),runif(1,2,20),50) }
+#' @param prob Probability to inflate a filed margin
+#' @param mean_thickness Margin width expectation
+#' @param v_thickness Margin width variance
+#' @return An S4 \code{Landscape} object with n fields, prop pourcentage of toxic fields.
+#' @examples \dontrun{
+#' simulateLandscape(n=100, prop=0.4, range=10,
+#' xmin=0, ymin=1000, xmax=0, ymin=1000, border_size=100,
+#' prop=runif(1,0.1,0.9), mean_thickness=runif(1,2,20),
+#' v_thickness=50) }
+#' @seealso \link{simulateInitialPartition} and \link{simulateThickMargins}
 #' @export
 simulateLandscape <- function(n=500,prop=0.4,range=10,xmin=0,xmax=5000,ymin=0,ymax=5000, border_size=200,prob=runif(1,0.1,0.9),mean_thickness=runif(1,2,20),v_thickness=50) {
   objectLTemp<-simulateInitialPartition(n=n,prop=prop,range=range,xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax)
@@ -82,7 +86,9 @@ simulateLandscape <- function(n=500,prop=0.4,range=10,xmin=0,xmax=5000,ymin=0,ym
   return(objectL)
 }
 
-#' Landscape plot Method
+#' @title Plot Method for Landscape
+#' @name plot Landscape
+#' @description Plot a Landscape object
 #' @param x A Landscape object
 #' @param y ANY
 #' @param add boolean to add draw hover plot
@@ -120,7 +126,7 @@ setMethod(f="plot",
             }
             if(plot.legend == TRUE){ legend(x=x@thelandscape@bbox[1,1],y=x@thelandscape@bbox[2,1],c("source","neutral","receptor"),pch=c(12,22,22),pt.cex=1.5,pt.lwd=c(2,2,2),col=c(rgb(0,0,0,alpha=alpha,maxColorValue = 255),rgb(0,0,0,alpha=alpha,maxColorValue = 255),rgb(0,0,0,alpha=alpha,maxColorValue = 255)),bg=rgb(255,255,255,alpha=alpha,maxColorValue=255),pt.bg=c(rgb(255,255,255,alpha=alpha,maxColorValue = 255),rgb(255,255,255,alpha=alpha,maxColorValue = 255),rgb(138,43,226,alpha=alpha,maxColorValue = 255)),title="Landscape") }
             
-            if(!is.null(objectT) & time > 0) {
+            if(!is.null(objectT) & class(objectT) == "ToxicIntensityRaster" & length(time) == 1 & time > 0) {
               p<-heat.colors(100, alpha = 0.6)
               p[100]=rgb(0,0,0,alpha=0)
               temp<-objectT[time,,]
@@ -151,7 +157,7 @@ setMethod(f="plot",
 # )
 
 
-#'show Landscape Info
+#' Show Method for Landscape
 #' @param object A Landscape class
 #' @rdname Landscape-show-method
 #' @aliases show,Landscape-method 
@@ -178,8 +184,7 @@ setMethod(f="show",
           }
 )
 
-#' print Landscape info
-#' print
+#' Print Method for Landscape
 #' @param x A Landscape object
 #' @param ... further arguments passed to or from other methods.
 #' @rdname Landscape-print-method
@@ -208,7 +213,7 @@ setMethod(f="print",
 )
 
 
-#' Method simulateThickMargins
+#' @title simulateThickMargins Method
 #' @name simulateThickMargins
 #' @param objectL A Landscape object
 #' @param ... other parameters
@@ -219,19 +224,17 @@ setGeneric(name="simulateThickMargins",
              standardGeneric("simulateThickMargins")
 )
 
-#' @name simulateThickMargins
-#'
-#' Simulate Border in a landscape.
-#' Border width use zero-inflated distribution
-#'
-# @param objectL a Landscape object
+# simulateThickMargins
+#' @description Simulate thick margins as receptors in a landscape.
+#' @details Margin width use a Gamma distribution with shape and scale parameters based on thickness mean and variance.   
 #' @param border_size A numeric, bbox margin
-#' @param prob Probability to inflated a border
-#' @param mean_thickness Border width expectation
-#' @param v_thickness Border width variance
-#' @return a Landscape object with border as receptor
+#' @param prob Probability to inflate a margin
+#' @param mean_thickness Margin width expectation in meter
+#' @param v_thickness Margin width variance in meter
+#' @return a Landscape object with fields margin as receptor
 #' @aliases simulateThickMargins,Landscape-method
 #' @rdname Landscape-simulateThickMargins-method
+#' @seealso \link{simulateInitialPartition} and \link{simulateLandscape}
 setMethod(f="simulateThickMargins",
           signature="Landscape",
           definition=function(objectL,border_size=200,prob=runif(1,0.1,0.9),mean_thickness=runif(1,2,20),v_thickness=50){
@@ -317,10 +320,15 @@ setMethod(f="getSpatialPolygons",
           }
 )
 
-#' Method getSPSources
-# @name getSPSources
+#' Method to get SpatialPolygons Sources from a Landscape
+#' @name getSPSources
 #' @param object A Landscape object
 #' @param ... options
+#' @examples 
+#' \dontrun{
+#' ## To get the first spatial polygon source information from a landscape object (named land)
+#' getSPSources(land)@polygons[[1]]
+#' }
 #' @rdname Landscape-getSPSources-method
 #' @exportMethod getSPSources
 setGeneric(name="getSPSources",
@@ -328,11 +336,9 @@ setGeneric(name="getSPSources",
              standardGeneric("getSPSources")
 )
  
-#' Method getSPSources
+# Method to get SpatialPolygons Sources from a Landscape
 # @name GetSPSources
-#' 
-#' Get all polygons of a landscape object identify as sources
-#' 
+#' @description Get all polygons of a Landscape object identified as sources
 #' @aliases Landscape,getSPSources-method
 #' @return a SpatialPolygonDataFrame object
 #' @rdname Landscape-getSPSources-method
@@ -365,14 +371,17 @@ setMethod(f="getSPReceptors",
           }
 )
 
-#' Wrapper function loadLandscape
+#' Wrapper function : loadLandscape
 #' @name loadLandscape
 #' 
-#' @description Wrapper to create a Landscape object using SpatialPolygons and dataframe. The SpatialPolygons object and the data.frame have to contain the same number of polygons and row (row ID is polygons ID).
+#' @description Wrapper function to create a Landscape object using SpatialPolygons and dataframe.
+#' The SpatialPolygons object and the data.frame have to contain the same number of polygons
+#'  and row (row ID is polygons ID).
 #' 
 #' @rdname Landscape-load-class
-#' @param sp a SpatialPolygons object
-#' @param data a data.frame containing fields (polygons) informations. Row num as fields ID, cols names as sources | neutral | receptors (1 if fields are of this types 0 otherwise)
+#' @param sp a SpatialPolygons object designing the landscape
+#' @param data a data.frame containing fields (polygons) information. Row names as fields ID, column names as sources | neutral | receptors (for a given field, the value is 1 for the type of the field (source or neutral or receptor), otherwise 0).
+#' @return A Landscape object
 #' @export
 loadLandscape <- function(sp,data) {
   res <- new("Landscape")
@@ -396,11 +405,12 @@ loadLandscape <- function(sp,data) {
 #' Create a Landscape object from SIG shapefile file
 #' @name loadLandscapeSIG
 #' 
-#' @description Create a Landscape object from SIG shapefile. Shapefile had to contain a SpatialPolygonsDataFrame. Data in the data frame containing fields (polygons) informations. Row num as fields ID, cols names as sources | neutral | receptors (1 if fields are of this types 0 otherwise).
+#' @description Create a Landscape object from SIG shapefile. Shapefile has to contain a SpatialPolygonsDataFrame. Data in the data frame contain fields (polygons) information. Row names as fields ID, cols names as sources | neutral | receptors (for a given field, the value is 1 for the type of the field (source or neutral or receptor), otherwise 0).
 #' 
 #' @rdname Landscape-load-sig-class
 #' @param dsn folder path to the source files
 #' @param layer file name without extension
+#' @return A Landscape object
 #' @export
 loadLandscapeSIG <- function(dsn,layer) {
   
@@ -424,18 +434,18 @@ loadLandscapeSIG <- function(dsn,layer) {
 }
 
 
-#' Save Particles Dispersion 3d Array to tiff file
-#' @name saveIntoFIle
+#' Save Particles Dispersion 3D Array to tiff file
+#' @name saveIntoFile
 #' 
-#' @description Save into tiff file particles dispersion 3d array from toxicIntensity. Output a RasterStack with a layer by time step with projection set to CRS="+proj=longlat +datum=WGS84"
-#' 
+#' @description Save into tiff file particles dispersion 3D array from toxicIntensity.
+#' The output is a RasterStack with a layer per time unit with projection set to CRS="+proj=longlat +datum=WGS84"
 #' @rdname Landscape-save-tiff
 #' @param objectL a Landscape object
-#' @param objectT a 3d array particles dispersion indexed by time
+#' @param objectT a 3D array particles dispersion indexed by time
 #' @param filename output file name
 #' @param format output format (default=GTiff)
 #' @param overwrite if True overwrite filename
-#' @return RasterStack
+#' @return a RasterStack object
 #' @export
 saveIntoFile<-function(objectL,objectT,filename="ParticlesDispersion.tif",format="GTiff",overwrite=T) {
   

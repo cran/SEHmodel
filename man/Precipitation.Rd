@@ -21,7 +21,7 @@ Precipitation data
   Precipitation over 10 years from 2003 to 2013
 }
 \source{
-  From simulations
+  From simulations of the Stochastic Weather Generator developed by Allard and Bourotte (2014).
 }
 \examples{
 data(Precipitation)

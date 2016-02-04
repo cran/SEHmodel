@@ -22,10 +22,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-#' Demo of SEHmodel package on Bt maize pollen (genetically modified crop) on non target butterfly species larvae.
-#' @title SEHmodel package pollen demo
+#' @description Demonstration of SEHmodel package on Bt maize pollen (Genetically Modified crop) on non target Lepidoptera larvae.
+#' In this example, 40\% of fields are sources (80 fields) and 100 individuals are exposed to toxic pollen.
+#' @title SEHmodel package pollen demonstration
 #' @name demo.pollen.run
-#' @param nb_fields number of fields in the landscape (default 200)
+#' @param nb_fields number of fields (sources and neutrals) in the landscape (default 200)
 #' @param max_size landscape size (in meter) (default 5000)
 #' @param raster_size raster size (default 2^10)
 #' @param nb_ind number of individuals to simulate (default 100)

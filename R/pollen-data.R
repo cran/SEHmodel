@@ -23,14 +23,15 @@
 #
 
 
-#' @title Pollen sources emission model
+#' @title Pollen sources emission simulation
 #' @name create.pollen.sources
-#' @description Create pollen sources emission
+#' @description Simulate pollen sources emission for maize crop. The proportion of silks 
+#' emitting pollen per day was given by Frédérique Angevin (Angevin et al. 2008). 
 #' @param nbOfSource Number of source fields
 #' @param numberOfDay Number of days of possible emission
 #' @param density Plant density plant/m\eqn{^2}
-#' @param pollen Pollen production  seeds/plant
-#' @return A matrix indexed by sources ID (in rows) and by time ( in columns) whose rows give the values of pollen emission for every sources.
+#' @param pollen Pollen production grains/plant
+#' @return A matrix indexed by sources ID (in rows) and by time ( in columns) whose rows give the values of pollen emission for every source.
 #' 
 #' @export
 create.pollen.sources <- function(nbOfSource=200,numberOfDay=60,density=runif(1,7,11),pollen=rgamma(1,shape=1.6,scale=1/(2*10^-7))) {

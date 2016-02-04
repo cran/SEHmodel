@@ -26,17 +26,17 @@
 #'
 #' @description Class \code{Landscape} defines a landscape
 #'
-#' @details Objects can be created by calling of the allocator new("Landscape", ...), or (preferred) by calling to the function \code{simulateLandscape} or \code{loadLandscpae}.
+#' @details Landscape objects can be created by calling of the allocator new("Landscape", ...), or (preferred) by calling to the function \code{simulateLandscape} or \code{loadLandscape}.
 #'
-#' @seealso \code{simulateLandscpae} , \code{loadLandscape} , \code{loadLandscapeSIG}
+#' @seealso \code{simulateLandscape} , \code{loadLandscape} , \code{loadLandscapeSIG}
 #'   
 #' @name Landscape-class
 #' @rdname Landscape-class
 #' @slot thelandscape A SpatialPolygonsDataFrame
-#' @slot xmin Left x coordinates (in meters)
-#' @slot xmax Right x coordinates (in meters)
-#' @slot ymin Bottom y coordinates (in meters)
-#' @slot ymax Top y coordinates (in meters)
+#' @slot xmin Left x-axis coordinate (in meters)
+#' @slot xmax Right x-axis coordinate (in meters)
+#' @slot ymin Bottom y-axis coordinate (in meters)
+#' @slot ymax Top y-axis coordinate (in meters)
 #' @slot n Number of fields in the landscape
 #'
 #' @import methods

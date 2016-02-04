@@ -24,18 +24,18 @@
 
 #' @title plot Landscape & Individuals method
 #' 
-#' @description Plot differents graphics using Landscape & Individuals objects.
-#' @details If objectT and numind are present will draw an individual ecoToxical graphics.
+#' @description Plots using Landscape & Individuals objects.
+#' @details If objectT and numind are informed, the function will draw an individual ecoToxical plot.
 #' 
-#'  If objectT and time are specified that will draw the landscape, the individuals states and the toxic intensity at this time of the simulation.
+#'  If objectT and time are specified, the function will draw the landscape, the individuals states and the toxic intensity at this time of the simulation.
 #'  
-#'  By default will draw the landscape and the individuals positions.
+#'  By default this function will draw the landscape and the individuals positions.
 #' 
 #' @param x A Landscape object
 #' @param y An Individuals object
 #' @param time Time selection (default = -1) for Toxic intensity
 #' @param add Boolean to draw hover an another plot
-#' @param objectT Toxic Intensity 3D array (result of \link{toxicIntensity}, default NULL)
+#' @param objectT ToxicIntensityRaster, 3D array (result of \link{toxicIntensity}, default NULL)
 #' @param numind an individual ID
 #' @param ... default plot parameters (par)
 #' @param plot.legend plot legend (default TRUE)
@@ -46,8 +46,8 @@
 setMethod(f="plot",
           signature=c("Landscape","Individuals"),
           definition=function(x,y,time=-1,objectT=NULL,numind=-1,add=F,...,plot.legend=TRUE) {
-            if(time==-1) {
-              if(numind != -1 & !is.null(objectT)){
+            if(time == -1) {
+              if(numind != -1 & !is.null(objectT) & class(objectT) == "ToxicIntensityRaster"){
                 plotEcoToxic(x,y,objectT,numind)
               }
               else {
@@ -56,9 +56,11 @@ setMethod(f="plot",
               }
             }
             else {
-              plot(x,add=add,objectT=objectT,time=time,...,plot.legend=plot.legend)
-              plot(y,time,add=T,...,plot.legend=plot.legend)
-              if(plot.legend == TRUE) { mtext(text =paste("Time",time,sep=" "),at=par("usr")[1]+0.45*diff(par("usr")[1:2]),line = -1,side = 3) }
+              if( is.null(nrow(time)) & !is.null(objectT) & class(objectT) == "ToxicIntensityRaster") {
+                plot(x,add=add,objectT=objectT,time=time,...,plot.legend=plot.legend)
+                plot(y,time,add=T,...,plot.legend=plot.legend)
+                if(plot.legend == TRUE) { mtext(text =paste("Time",time,sep=" "),at=par("usr")[1]+0.45*diff(par("usr")[1:2]),line = -1,side = 3) }
+              }
             }
             
 #             if(time != -1 & !is.null(objectT) & numind == -1) {

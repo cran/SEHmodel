@@ -23,9 +23,10 @@
 #
 
 #' @importFrom graphics axis
+#' @importFrom graphics abline
 
-#' @title Method ecoToxicological
-#' @description Generic method on Landscape and Individuals objects for ecotoxicological.
+#' @title EcoToxicological model method
+#' @description Generic method on Landscape and Individuals objects applying ecotoxicological equation.
 #' @name ecoToxic
 # @param objectL A Landscape object
 # @param objectI An Individuals object
@@ -38,17 +39,17 @@ setGeneric(name="ecoToxic",
 )
 
 #' ecoToxic
-#' @description Internal concentration of contaminants within individuals
+#' @description This method gives internal concentration of contaminants within individuals, from toxic quantities in the environment and individual parameters.
 # @details ecotoxic details
 #' @param objectL A Landscape object
 #' @param objectI An Individuals object
-#' @param objectT A 3D array of Toxic Dispersion over time [t,x,y], first indice is time 
+#' @param objectT A ToxicIntensityRaster object, a 3D array of Toxic Dispersion over time [t,x,y], first indice is time 
 #' @param mintime Time to start simulation (default = 1)
 #' @param maxtime Time to end simulation
-#' @param kin \% of toxic ingestion
-#' @param kout \% of toxic elimination
-#' @param deltat \% of a time step
-#' @return An Individuals object
+#' @param kin ingestion rate (\% of contaminants staying in the body)
+#' @param kout elimination rate (\% of contaminants eliminated from the body)
+#' @param deltat \% of a time unit for the ordinary differential equation (ODE)
+#' @return An Individuals object with updated internal toxic concentrations
 #' @aliases ecotoxicological-method
 #' @rdname ecoToxic
 setMethod(f="ecoToxic",
@@ -70,34 +71,44 @@ setMethod(f="ecoToxic",
 
 
 
-#' @title Plot internal toxic concentration
+#' @title Plot internal toxic concentration method
 #'
-#' @description Plot a time serie of internal toxic concentration for a given individual.
+#' @description Plot a time series of internal toxic concentration for a given individual.
 #' @name plotEcotoxic
 #' @param objectL A Landscape object
 #' @param objectI An Individuals object
-#' @param objectT A 3d array of Toxic intensity over the time [t,x,y], (first indice is time) see \code{\link{toxicIntensity}}
-#' @param numind An individual id
+#' @param objectT A ToxicIntensityRaster, a 3d array of Toxic intensity over the time [t,x,y], (first indice is time) see \code{\link{toxicIntensity}}
+#' @param numind An individual ID
 # @rdname ecoToxic
 #' @export
 plotEcoToxic<-function(objectL,objectI,objectT,numind=8) {
   mintime=1
-  xstep=(objectL@xmax-objectL@xmin)/length(objectT[mintime,,1])
-  ystep=(objectL@ymax-objectL@ymin)/length(objectT[mintime,1,])
+  xstep=abs((objectL@xmax-objectL@xmin)/length(objectT[mintime,,1]))
+  ystep=abs((objectL@ymax-objectL@ymin)/length(objectT[mintime,1,]))
   par(mar=c(4.1,4.1,4.1,3.1))
   for(i in numind ) {
-    plot(objectT[,objectI@coordinate[i]@coords[1]/xstep,objectI@coordinate[i]@coords[2]/ystep],col=1,xlab="time",ylab=" ",type="b",pch=16,las=1)
-    max_local=max(objectT[,objectI@coordinate[i]@coords[1]/xstep,objectI@coordinate[i]@coords[2]/ystep])
+    plot(objectT[,round((objectI@coordinate[i]@coords[1]-objectI@xmin)/xstep),round((objectI@coordinate[i]@coords[2]-objectI@ymin)/ystep)],col=1,xlab="time",ylab=" ",type="b",pch=16,las=1)
+    max_local=max(objectT[,round((objectI@coordinate[i]@coords[1]-objectI@xmin)/xstep),round((objectI@coordinate[i]@coords[2]-objectI@ymin)/ystep)])
     max_indiv=max(objectI@intern_toxic[i,])
-    lines(objectI@intern_toxic[i,]*max_local/max_indiv,col=2,type="b",pch=16)
+   # lines(objectI@intern_toxic[i,]*max_local/max_indiv,col=2,type="b",pch=16)
+    #ajout :
+    #lines(getIndividualsLife(ind2)[i,]*max_local/40,col="red",type="b",pch=16)
+    lines(objectI@intern_toxic[i,]*max_local/40,col="red",type="b",pch=16)
     points(objectI@dob[i],0,col=3,pch=16,cex=1.5)
     legend("topright",c("internal concentration","local concentration","date of birth"),col=c(2,1,3),pch=16 )
     title(main=paste("Individual #",numind))
-    axis(side=4,at=seq(0,max_local,max_local/4),labels=round(seq(0,max_indiv,max_indiv/4),2),las=1,col.axis=2)
-    mtext("local concentration",3,line=0,col=1,at=-3)
+    #axis(side=4,at=seq(0,max_local,max_local/4),labels=round(seq(0,max_indiv,max_indiv/4),2),las=1,col.axis=2)
+    axis(side=4,at=seq(0,max_local,max_local/4),labels=round(seq(0,40,40/4),2),las=1,col.axis=2)
+    mtext("local concentration",3,line=0,col=1,at=-1)
     mtext("internal concentration",3,line=0,col=2,at=60)
+    abline(h=15*max_local/40,col="darkgrey")
+    
   }
 }
+
+
+
+
 
 # @export
 #getIndividualsInfo <- function(objectL,objectI,objectT) {
@@ -131,12 +142,14 @@ conc.int=function(cmil,cint_start=0,kin=0.25,kout=0.5,min.time=1,max.time,deltat
   cint=numeric(0)  
   cint_previous=cint_start
   for (t in min.time:max.time) {
-    cmilieut=cmil[t]
-    cint_temp=cint_previous
-    j=1
+    cmilieut<-cmil[t]
+    cint_temp<-cint_previous
+    j<-1
+    indt<-deltat*kin*cmilieut
+    outdt<-1 + deltat*kout
     for (dt in seq(0,0.99,deltat)) { # max.time+1
       # attention vecteur indices=entiers
-      cint_temp[j+1]<-(cint_temp[j] + deltat*kin*cmilieut) / (1 + deltat*kout)
+      cint_temp[j+1]<-(cint_temp[j] + indt) / (outdt)
       j=j+1
     }
     cint[t]<-cint_temp[length(cint_temp)]
